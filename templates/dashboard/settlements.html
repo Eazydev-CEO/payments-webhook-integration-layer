@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load pb %}
+{% block title %}Settlements{% endblock %}
+{% block topbar_title %}Settlements{% endblock %}
+{% block topbar_sub %}Import statements &amp; reconcile{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h1>Settlements</h1><p>{{ page_obj.paginator.count }} imported batch(es)</p></div>
+  <div class="spacer"></div>
+  <button class="btn btn-primary" onclick="document.getElementById('import-card').scrollIntoView({behavior:'smooth'});">
+    <i class="bi bi-upload"></i> Import CSV
+  </button>
+</div>
+
+<div class="card">
+  <div class="card-body tight">
+    <div class="table-wrap">
+      <table class="pb-table">
+        <thead><tr><th>Reference</th><th>Processor</th><th>Date</th><th>Expected</th>
+          <th>Received</th><th>Difference</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          {% for b in page_obj %}
+          <tr>
+            <td class="mono">{{ b.reference }}</td>
+            <td><span class="badge-pill b-gray">{{ b.processor.code }}</span></td>
+            <td class="text-faint nowrap">{{ b.statement_date|date:"M d, Y" }}</td>
+            <td class="amount">{{ b.expected_amount|money }}</td>
+            <td class="amount">{{ b.received_amount|money }}</td>
+            <td class="amount {% if b.is_balanced %}b-green{% else %}b-amber{% endif %}"
+                style="padding:0;">
+              <span class="badge-pill {% if b.is_balanced %}b-green{% else %}b-amber{% endif %}">
+                {{ b.difference|money }} {{ b.currency }}</span></td>
+            <td>{% status_badge b.status %}</td>
+            <td><a class="btn btn-sm" href="{% url 'dashboard:reconciliation' b.pk %}">
+              <i class="bi bi-clipboard-data"></i> Reconcile</a></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8"><div class="empty"><i class="bi bi-cash-stack"></i>No settlement batches — import one below</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+
+<div class="card mt-20" id="import-card">
+  <div class="card-head"><h2><i class="bi bi-upload"></i> Import settlement CSV</h2></div>
+  <div class="card-body">
+    <p class="text-faint" style="margin-top:0;font-size:12.5px;">
+      Columns: <code class="mono">reference, amount, currency, status, paid_at</code>.
+      A sample lives at <code class="mono">docs/sample_settlement.csv</code>.</p>
+    <form method="post" action="{% url 'dashboard:settlement_import' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="grid grid-3">
+        <div class="field">
+          <label class="field-label">Processor</label>
+          <select name="processor" required>
+            {% for p in processors %}<option value="{{ p.code }}">{{ p.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Batch reference</label>
+          <input type="text" name="reference" required placeholder="stripe-2026-07-08">
+        </div>
+        <div class="field">
+          <label class="field-label">Statement date</label>
+          <input type="date" name="statement_date" value="{{ today }}" required>
+        </div>
+        <div class="field">
+          <label class="field-label">Currency</label>
+          <input type="text" name="currency" value="USD" maxlength="3">
+        </div>
+        <div class="field" style="grid-column:span 2;">
+          <label class="field-label">CSV file</label>
+          <input type="file" name="file" accept=".csv" required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-clipboard-check"></i> Import &amp; reconcile</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

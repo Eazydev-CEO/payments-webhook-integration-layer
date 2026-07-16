@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load pb %}
+{% block title %}Transactions{% endblock %}
+{% block topbar_title %}Transactions{% endblock %}
+{% block topbar_sub %}Money movements from processor events{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h1>Transactions</h1><p>{{ page_obj.paginator.count }} total money movements</p></div>
+</div>
+
+<form method="get" class="filters">
+  <select name="status" data-autosubmit>
+    <option value="">All statuses</option>
+    <option value="succeeded" {% if filters.status == 'succeeded' %}selected{% endif %}>Succeeded</option>
+    <option value="failed" {% if filters.status == 'failed' %}selected{% endif %}>Failed</option>
+    <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>Pending</option>
+    <option value="refunded" {% if filters.status == 'refunded' %}selected{% endif %}>Refunded</option>
+  </select>
+</form>
+
+<div class="card">
+  <div class="card-body tight">
+    <div class="table-wrap">
+      <table class="pb-table">
+        <thead><tr><th>Reference</th><th>Intent</th><th>Processor</th><th>Amount</th><th>Status</th><th>Created</th></tr></thead>
+        <tbody>
+          {% for t in page_obj %}
+          <tr>
+            <td class="mono">{{ t.reference }}</td>
+            <td><a class="mono" href="{% url 'dashboard:intent_detail' t.intent.reference %}">{{ t.intent.reference }}</a></td>
+            <td><span class="badge-pill b-gray">{{ t.processor.code }}</span></td>
+            <td class="amount">{{ t.amount|money }} {{ t.currency }}</td>
+            <td>{% status_badge t.status %}</td>
+            <td class="text-faint nowrap">{{ t.created_at|date:"M d, H:i" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6"><div class="empty"><i class="bi bi-arrow-left-right"></i>No transactions yet</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

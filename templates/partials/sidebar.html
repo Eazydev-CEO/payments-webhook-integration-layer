@@ -1,0 +1,37 @@
+{% load static %}
+<aside class="pb-sidebar" id="pb-sidebar">
+  <a href="{% url 'dashboard:overview' %}" class="pb-brand">
+    <span class="logo"><i class="bi bi-bank2"></i></span>
+    <span>{{ SITE_NAME }}<small>Payments &amp; Webhook Layer</small></span>
+  </a>
+
+  <nav class="pb-nav">
+    <div class="pb-nav-label">Operations</div>
+    <a href="{% url 'dashboard:overview' %}" class="{% if active == 'overview' %}active{% endif %}">
+      <i class="bi bi-grid-1x2"></i> Overview</a>
+    <a href="{% url 'dashboard:intents' %}" class="{% if active == 'intents' %}active{% endif %}">
+      <i class="bi bi-receipt"></i> Payment Intents</a>
+    <a href="{% url 'dashboard:transactions' %}" class="{% if active == 'transactions' %}active{% endif %}">
+      <i class="bi bi-arrow-left-right"></i> Transactions</a>
+
+    <div class="pb-nav-label">Webhooks</div>
+    <a href="{% url 'dashboard:webhooks' %}" class="{% if active == 'webhooks' %}active{% endif %}">
+      <i class="bi bi-broadcast-pin"></i> Webhook Events</a>
+    <a href="{% url 'dashboard:failed_webhooks' %}" class="{% if active == 'failed_webhooks' %}active{% endif %}">
+      <i class="bi bi-exclamation-octagon"></i> Failed Webhooks</a>
+    <a href="{% url 'dashboard:crm' %}" class="{% if active == 'crm' %}active{% endif %}">
+      <i class="bi bi-diagram-3"></i> CRM Deliveries</a>
+
+    <div class="pb-nav-label">Finance</div>
+    <a href="{% url 'dashboard:settlements' %}" class="{% if active == 'settlements' %}active{% endif %}">
+      <i class="bi bi-cash-stack"></i> Settlements</a>
+    <a href="{% url 'dashboard:audit' %}" class="{% if active == 'audit' %}active{% endif %}">
+      <i class="bi bi-shield-check"></i> Audit Logs</a>
+
+    <div class="pb-nav-label">System</div>
+    <a href="{% url 'dashboard:settings' %}" class="{% if active == 'settings' %}active{% endif %}">
+      <i class="bi bi-sliders"></i> Settings / Processors</a>
+    <a href="/api/docs/" target="_blank" rel="noopener">
+      <i class="bi bi-file-earmark-code"></i> API Docs</a>
+  </nav>
+</aside>

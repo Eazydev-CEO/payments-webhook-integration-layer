@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load pb %}
+{% block title %}Reconcile {{ batch.reference }}{% endblock %}
+{% block topbar_title %}Reconciliation{% endblock %}
+{% block topbar_sub %}{{ batch.reference }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <a href="{% url 'dashboard:settlements' %}" class="text-faint" style="font-size:12.5px;"><i class="bi bi-arrow-left"></i> Back to settlements</a>
+    <h1 style="margin-top:6px;">{{ batch.reference }}</h1>
+    <p>{{ batch.processor.name }} · {{ batch.statement_date|date:"M d, Y" }}</p>
+  </div>
+  <div class="spacer"></div>
+  {% status_badge batch.status %}
+</div>
+
+<!-- Totals -->
+<div class="kpi-grid">
+  <div class="kpi">
+    <div class="kpi-label">Expected (internal)</div>
+    <div class="kpi-value">{{ batch.expected_amount|money }}</div>
+    <div class="kpi-sub">{{ batch.currency }}</div>
+  </div>
+  <div class="kpi info">
+    <div class="kpi-label">Received (settlement)</div>
+    <div class="kpi-value">{{ batch.received_amount|money }}</div>
+    <div class="kpi-sub">{{ batch.currency }}</div>
+  </div>
+  <div class="kpi {% if batch.is_balanced %}good{% else %}bad{% endif %}">
+    <div class="kpi-label">Difference</div>
+    <div class="kpi-value">{{ batch.difference|money }}</div>
+    <div class="kpi-sub">{% if batch.is_balanced %}balanced{% else %}needs review{% endif %}</div>
+  </div>
+  <div class="kpi warn">
+    <div class="kpi-label">Mismatches</div>
+    <div class="kpi-value">{{ batch.mismatch_count }}</div>
+    <div class="kpi-sub">non-matched items</div>
+  </div>
+</div>
+
+<!-- Reconciliation bar -->
+<div class="card">
+  <div class="card-head"><h2>Match breakdown</h2></div>
+  <div class="card-body">
+    {% with total=batch.items.count %}
+    <div class="recon-bar">
+      <span style="width:{{ batch.summary.matched|pct:total }}%;background:#34d399;"></span>
+      <span style="width:{{ batch.summary.amount_mismatch|pct:total }}%;background:#fbbf24;"></span>
+      <span style="width:{{ batch.summary.currency_mismatch|pct:total }}%;background:#a78bfa;"></span>
+      <span style="width:{{ batch.summary.missing|pct:total }}%;background:#fb7185;"></span>
+      <span style="width:{{ batch.summary.unknown|pct:total }}%;background:#64748b;"></span>
+    </div>
+    <div class="recon-legend">
+      <span class="k"><span class="sw" style="background:#34d399;"></span> Matched · {{ batch.summary.matched|default:0 }}</span>
+      <span class="k"><span class="sw" style="background:#fbbf24;"></span> Amount mismatch · {{ batch.summary.amount_mismatch|default:0 }}</span>
+      <span class="k"><span class="sw" style="background:#a78bfa;"></span> Currency mismatch · {{ batch.summary.currency_mismatch|default:0 }}</span>
+      <span class="k"><span class="sw" style="background:#fb7185;"></span> Missing · {{ batch.summary.missing|default:0 }}</span>
+      <span class="k"><span class="sw" style="background:#64748b;"></span> Unknown · {{ batch.summary.unknown|default:0 }}</span>
+    </div>
+    {% endwith %}
+  </div>
+</div>
+
+<!-- Items -->
+<div class="card mt-20">
+  <div class="card-head"><h2>Settlement items</h2>
+    <div class="spacer"></div>
+    <form method="get">
+      <select name="match" data-autosubmit>
+        <option value="">All items</option>
+        {% for value, label in match_choices %}<option value="{{ value }}" {% if match_filter == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </form>
+  </div>
+  <div class="card-body tight">
+    <div class="table-wrap">
+      <table class="pb-table">
+        <thead><tr><th>Reference</th><th>Matched intent</th><th>Amount</th>
+          <th>Reported</th><th>Match</th><th>Detail</th></tr></thead>
+        <tbody>
+          {% for it in items %}
+          <tr>
+            <td class="mono">{{ it.external_reference }}</td>
+            <td>{% if it.matched_intent %}<a class="mono" href="{% url 'dashboard:intent_detail' it.matched_intent.reference %}">{{ it.matched_intent.reference }}</a>{% else %}<span class="text-faint">—</span>{% endif %}</td>
+            <td class="amount">{{ it.amount|money }} {{ it.currency }}</td>
+            <td class="text-muted-2">{{ it.reported_status|default:"—" }}</td>
+            <td>{% status_badge it.match_status %}</td>
+            <td class="text-faint" style="max-width:280px;">{{ it.detail }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6"><div class="empty"><i class="bi bi-clipboard"></i>No items for this filter</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

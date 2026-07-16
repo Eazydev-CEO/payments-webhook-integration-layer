@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load pb %}
+{% block title %}Payment Intents{% endblock %}
+{% block topbar_title %}Payment Intents{% endblock %}
+{% block topbar_sub %}Unified across Stripe, Paystack &amp; internal{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h1>Payment Intents</h1><p>{{ page_obj.paginator.count }} total · idempotent creation</p></div>
+  <div class="spacer"></div>
+  <button class="btn btn-primary" onclick="document.getElementById('create-card').scrollIntoView({behavior:'smooth'});">
+    <i class="bi bi-plus-lg"></i> New intent
+  </button>
+</div>
+
+<!-- Filters -->
+<form method="get" class="filters">
+  <div class="search">
+    <i class="bi bi-search"></i>
+    <input type="text" name="q" value="{{ filters.q }}" placeholder="Search reference or email…">
+  </div>
+  <select name="status" data-autosubmit>
+    <option value="">All statuses</option>
+    {% for value, label in status_choices %}
+      <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <select name="processor" data-autosubmit>
+    <option value="">All processors</option>
+    {% for p in processors %}
+      <option value="{{ p.code }}" {% if filters.processor == p.code %}selected{% endif %}>{{ p.name }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn" type="submit"><i class="bi bi-funnel"></i> Filter</button>
+</form>
+
+<!-- Table -->
+<div class="card">
+  <div class="card-body tight">
+    <div class="table-wrap">
+      <table class="pb-table">
+        <thead>
+          <tr><th>Reference</th><th>Customer</th><th>Processor</th><th>Amount</th>
+              <th>Status</th><th>Created</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for i in page_obj %}
+          <tr>
+            <td><a class="mono" href="{% url 'dashboard:intent_detail' i.reference %}">{{ i.reference }}</a></td>
+            <td>{{ i.customer_name }}<div class="text-faint" style="font-size:11.5px;">{{ i.customer_email }}</div></td>
+            <td><span class="badge-pill b-gray">{{ i.processor.code }}</span></td>
+            <td class="amount">{{ i.amount|money }} {{ i.currency }}</td>
+            <td>{% status_badge i.status %}</td>
+            <td class="text-faint nowrap">{{ i.created_at|date:"M d, H:i" }}</td>
+            <td><a class="btn btn-sm" href="{% url 'dashboard:intent_detail' i.reference %}">Open</a></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7"><div class="empty"><i class="bi bi-receipt"></i>No payment intents match your filters</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+
+<!-- Create intent -->
+<div class="card mt-20" id="create-card">
+  <div class="card-head"><h2><i class="bi bi-plus-circle"></i> Create payment intent</h2></div>
+  <div class="card-body">
+    <form method="post" action="{% url 'dashboard:intent_create' %}">
+      {% csrf_token %}
+      <div class="grid grid-3">
+        <div class="field">
+          <label class="field-label">Idempotency key</label>
+          <input type="text" name="idempotency_key" required placeholder="order-1001">
+        </div>
+        <div class="field">
+          <label class="field-label">Processor</label>
+          <select name="processor" required>
+            {% for p in processors %}<option value="{{ p.code }}">{{ p.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Amount</label>
+          <input type="number" step="0.01" min="0.01" name="amount" required placeholder="149.99">
+        </div>
+        <div class="field">
+          <label class="field-label">Customer name</label>
+          <input type="text" name="customer_name" required placeholder="Ada Lovelace">
+        </div>
+        <div class="field">
+          <label class="field-label">Customer email</label>
+          <input type="email" name="customer_email" required placeholder="ada@example.com">
+        </div>
+        <div class="field">
+          <label class="field-label">Currency</label>
+          <input type="text" name="currency" value="USD" maxlength="3">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Create intent</button>
+      <span class="text-faint" style="font-size:12px;margin-left:10px;">
+        Re-using an existing key returns the original intent (idempotent).</span>
+    </form>
+  </div>
+</div>
+{% endblock %}

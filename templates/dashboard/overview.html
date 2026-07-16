@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% load pb %}
+{% block title %}Overview{% endblock %}
+{% block topbar_title %}Overview{% endblock %}
+{% block topbar_sub %}Payments, webhooks &amp; settlement health{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Overview</h1>
+    <p>Operational snapshot for <strong>{{ window.label }}</strong>.</p>
+  </div>
+  <div class="spacer"></div>
+  <div class="seg">
+    {% for key, label in range_options %}
+      <a href="?range={{ key }}" class="{% if window.key == key %}active{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+</div>
+
+<form method="get" class="filters" style="margin-bottom:22px;">
+  <input type="hidden" name="range" value="custom">
+  <label class="field-label" style="margin:0 4px 0 0;align-self:center;">Custom</label>
+  <input type="date" name="start" value="{{ request.GET.start }}">
+  <span style="align-self:center;color:var(--text-faint);">→</span>
+  <input type="date" name="end" value="{{ request.GET.end }}">
+  <button class="btn btn-sm" type="submit"><i class="bi bi-funnel"></i> Apply</button>
+</form>
+
+<!-- KPI row 1 -->
+<div class="kpi-grid">
+  <div class="kpi">
+    <div class="kpi-top"><span class="kpi-icon"><i class="bi bi-cash-coin"></i></span></div>
+    <div class="kpi-label">Total payment volume</div>
+    <div class="kpi-value">{{ metrics.total_volume|money }}</div>
+    <div class="kpi-sub">{{ metrics.total_intents }} intents created</div>
+  </div>
+  <div class="kpi good">
+    <div class="kpi-top"><span class="kpi-icon"><i class="bi bi-check2-circle"></i></span></div>
+    <div class="kpi-label">Successful payments</div>
+    <div class="kpi-value">{{ metrics.successful_payments }}</div>
+    <div class="kpi-sub">settled successfully</div>
+  </div>
+  <div class="kpi bad">
+    <div class="kpi-top"><span class="kpi-icon"><i class="bi bi-x-octagon"></i></span></div>
+    <div class="kpi-label">Failed payments</div>
+    <div class="kpi-value">{{ metrics.failed_payments }}</div>
+    <div class="kpi-sub">declined or errored</div>
+  </div>
+  <div class="kpi warn">
+    <div class="kpi-top"><span class="kpi-icon"><i class="bi bi-hourglass-split"></i></span></div>
+    <div class="kpi-label">Pending payments</div>
+    <div class="kpi-value">{{ metrics.pending_payments }}</div>
+    <div class="kpi-sub">awaiting outcome</div>
+  </div>
+</div>
+
+<!-- KPI row 2 -->
+<div class="kpi-grid">
+  <div class="kpi info">
+    <div class="kpi-top"><span class="kpi-icon"><i class="bi bi-files"></i></span></div>
+    <div class="kpi-label">Duplicate webhook events</div>
+    <div class="kpi-value">{{ metrics.duplicate_webhooks }}</div>
+    <div class="kpi-sub">stored &amp; ignored (idempotent)</div>
+  </div>
+  <div class="kpi bad">
+    <div class="kpi-top"><span class="kpi-icon"><i class="bi bi-exclamation-octagon"></i></span></div>
+    <div class="kpi-label">Failed webhook deliveries</div>
+    <div class="kpi-value">{{ metrics.failed_webhook_deliveries }}</div>
+    <div class="kpi-sub">retry/backoff queue</div>
+  </div>
+  <div class="kpi good">
+    <div class="kpi-top"><span class="kpi-icon"><i class="bi bi-diagram-3"></i></span></div>
+    <div class="kpi-label">Successful CRM deliveries</div>
+    <div class="kpi-value">{{ metrics.successful_crm }}</div>
+    <div class="kpi-sub">{{ metrics.failed_crm }} currently failing</div>
+  </div>
+  <div class="kpi warn">
+    <div class="kpi-top"><span class="kpi-icon"><i class="bi bi-clipboard-x"></i></span></div>
+    <div class="kpi-label">Settlement mismatches</div>
+    <div class="kpi-value">{{ metrics.settlement_mismatches }}</div>
+    <div class="kpi-sub">needs reconciliation review</div>
+  </div>
+</div>
+
+<!-- Chart + verification -->
+<div class="grid grid-2 mt-20">
+  <div class="card">
+    <div class="card-head"><h2>Succeeded volume trend</h2>
+      <div class="spacer"></div>
+      <span class="text-faint" style="font-size:12px;">{{ window.label }}</span>
+    </div>
+    <div class="card-body">
+      <div class="chart-box">
+        <canvas id="volumeChart" data-labels="{{ chart_labels }}" data-values="{{ chart_values }}"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Webhook verification</h2></div>
+    <div class="card-body">
+      <div class="flex items-center gap-8" style="justify-content:space-between;margin-bottom:14px;">
+        <div>
+          <div class="kpi-label">Signatures verified</div>
+          <div style="font-size:24px;font-weight:700;">{{ metrics.verified_webhooks }}</div>
+        </div>
+        <span class="badge-pill b-green"><i class="bi bi-shield-check"></i> Verified</span>
+      </div>
+      <div class="flex items-center gap-8" style="justify-content:space-between;">
+        <div>
+          <div class="kpi-label">Signatures rejected</div>
+          <div style="font-size:24px;font-weight:700;">{{ metrics.rejected_webhooks }}</div>
+        </div>
+        <span class="badge-pill b-red"><i class="bi bi-shield-x"></i> Rejected</span>
+      </div>
+      <a href="{% url 'dashboard:webhooks' %}" class="btn btn-sm" style="margin-top:18px;width:100%;justify-content:center;">
+        <i class="bi bi-broadcast-pin"></i> Inspect webhook events
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Recent activity -->
+<div class="grid grid-2 mt-20">
+  <div class="card">
+    <div class="card-head"><h2>Recent payment intents</h2>
+      <div class="spacer"></div>
+      <a href="{% url 'dashboard:intents' %}" class="text-faint" style="font-size:12px;">View all →</a>
+    </div>
+    <div class="card-body tight">
+      <div class="table-wrap">
+        <table class="pb-table">
+          <thead><tr><th>Reference</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for i in recent_intents %}
+            <tr>
+              <td><a class="mono" href="{% url 'dashboard:intent_detail' i.reference %}">{{ i.reference }}</a></td>
+              <td class="text-muted-2">{{ i.customer_name }}</td>
+              <td class="amount">{{ i.amount|money }} {{ i.currency }}</td>
+              <td>{% status_badge i.status %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4"><div class="empty"><i class="bi bi-inbox"></i>No payment intents yet</div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Recent webhook events</h2>
+      <div class="spacer"></div>
+      <a href="{% url 'dashboard:webhooks' %}" class="text-faint" style="font-size:12px;">View all →</a>
+    </div>
+    <div class="card-body tight">
+      <div class="table-wrap">
+        <table class="pb-table">
+          <thead><tr><th>Event</th><th>Processor</th><th>Type</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for w in recent_webhooks %}
+            <tr>
+              <td class="mono">{{ w.event_id|truncatechars:18 }}</td>
+              <td><span class="badge-pill b-gray">{{ w.processor.code }}</span></td>
+              <td class="text-muted-2">{{ w.event_type|default:"—" }}
+                {% if w.is_duplicate %}<span class="badge-pill b-cyan" style="margin-left:4px;">dup</span>{% endif %}</td>
+              <td>{% status_badge w.status %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4"><div class="empty"><i class="bi bi-inbox"></i>No webhook events yet</div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

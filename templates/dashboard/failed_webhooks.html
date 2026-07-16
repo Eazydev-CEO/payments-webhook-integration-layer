@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load pb %}
+{% block title %}Failed Webhooks{% endblock %}
+{% block topbar_title %}Failed Webhooks{% endblock %}
+{% block topbar_sub %}Retry / backoff queue{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h1>Failed Webhooks</h1><p>{{ page_obj.paginator.count }} event(s) failing or permanently failed</p></div>
+  <div class="spacer"></div>
+  <span class="text-faint" style="font-size:12px;align-self:center;">
+    <i class="bi bi-info-circle"></i> Runner: <code class="mono">manage.py process_webhook_retries</code></span>
+</div>
+
+<div class="card">
+  <div class="card-body tight">
+    <div class="table-wrap">
+      <table class="pb-table">
+        <thead><tr><th>Event ID</th><th>Processor</th><th>Status</th><th>Retries</th>
+          <th>Next retry</th><th>Last error</th><th></th></tr></thead>
+        <tbody>
+          {% for w in page_obj %}
+          <tr>
+            <td class="mono">{{ w.event_id|truncatechars:22 }}</td>
+            <td><span class="badge-pill b-gray">{{ w.processor.code }}</span></td>
+            <td>{% status_badge w.status %}</td>
+            <td>{{ w.retry_count }}/{{ w.max_retries }}</td>
+            <td class="text-faint nowrap">{{ w.next_retry_at|date:"M d, H:i"|default:"—" }}</td>
+            <td class="text-muted-2" style="max-width:260px;">{{ w.last_error|truncatechars:60|default:"—" }}</td>
+            <td>
+              <form method="post" action="{% url 'dashboard:webhook_retry' w.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-arrow-clockwise"></i> Retry now</button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7"><div class="empty"><i class="bi bi-check2-circle"></i>No failed webhooks — everything is healthy</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

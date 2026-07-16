@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load pb %}
+{% block title %}{{ intent.reference }}{% endblock %}
+{% block topbar_title %}Payment Intent{% endblock %}
+{% block topbar_sub %}{{ intent.reference }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <a href="{% url 'dashboard:intents' %}" class="text-faint" style="font-size:12.5px;"><i class="bi bi-arrow-left"></i> Back to intents</a>
+    <h1 class="mono" style="margin-top:6px;">{{ intent.reference }}</h1>
+  </div>
+  <div class="spacer"></div>
+  {% status_badge intent.status %}
+  {% if not intent.is_terminal %}
+  <form method="post" action="{% url 'dashboard:intent_mark' intent.reference %}" style="display:inline;">
+    {% csrf_token %}
+    <input type="hidden" name="outcome" value="success">
+    <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-check2"></i> Mark success</button>
+  </form>
+  <form method="post" action="{% url 'dashboard:intent_mark' intent.reference %}" style="display:inline;">
+    {% csrf_token %}
+    <input type="hidden" name="outcome" value="failed">
+    <button class="btn btn-danger btn-sm" type="submit"><i class="bi bi-x"></i> Mark failed</button>
+  </form>
+  {% endif %}
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <div class="card-head"><h2>Details</h2></div>
+    <div class="card-body">
+      <dl class="dl">
+        <dt>Customer</dt><dd>{{ intent.customer_name }} · {{ intent.customer_email }}</dd>
+        <dt>Amount</dt><dd class="amount">{{ intent.amount|money }} {{ intent.currency }}</dd>
+        <dt>Processor</dt><dd><span class="badge-pill b-gray">{{ intent.processor.name }}</span></dd>
+        <dt>Status</dt><dd>{% status_badge intent.status %}</dd>
+        <dt>Idempotency key</dt><dd class="mono">{{ intent.idempotency_key }}</dd>
+        <dt>Created</dt><dd>{{ intent.created_at|date:"M d, Y H:i:s" }}</dd>
+        <dt>Updated</dt><dd>{{ intent.updated_at|date:"M d, Y H:i:s" }}</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Metadata</h2></div>
+    <div class="card-body">
+      <div class="code-block">{{ intent.metadata|pprint }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-20">
+  <div class="card-head"><h2>Transactions</h2></div>
+  <div class="card-body tight">
+    <div class="table-wrap">
+      <table class="pb-table">
+        <thead><tr><th>Reference</th><th>External ID</th><th>Amount</th><th>Status</th><th>Created</th></tr></thead>
+        <tbody>
+          {% for t in transactions %}
+          <tr>
+            <td class="mono">{{ t.reference }}</td>
+            <td class="mono text-faint">{{ t.external_id|default:"—" }}</td>
+            <td class="amount">{{ t.amount|money }} {{ t.currency }}</td>
+            <td>{% status_badge t.status %}</td>
+            <td class="text-faint nowrap">{{ t.created_at|date:"M d, H:i" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5"><div class="empty"><i class="bi bi-arrow-left-right"></i>No transactions recorded yet</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-2 mt-20">
+  <div class="card">
+    <div class="card-head"><h2>CRM deliveries</h2></div>
+    <div class="card-body tight">
+      <div class="table-wrap">
+        <table class="pb-table">
+          <thead><tr><th>Target</th><th>Status</th><th>Retries</th></tr></thead>
+          <tbody>
+            {% for d in crm_deliveries %}
+            <tr>
+              <td>{{ d.get_target_display }}</td>
+              <td>{% status_badge d.status %}</td>
+              <td>{{ d.retry_count }}/{{ d.max_retries }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3"><div class="empty"><i class="bi bi-diagram-3"></i>No CRM deliveries</div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Settlement items</h2></div>
+    <div class="card-body tight">
+      <div class="table-wrap">
+        <table class="pb-table">
+          <thead><tr><th>Batch</th><th>Amount</th><th>Match</th></tr></thead>
+          <tbody>
+            {% for s in settlement_items %}
+            <tr>
+              <td class="mono"><a href="{% url 'dashboard:reconciliation' s.batch.pk %}">{{ s.batch.reference }}</a></td>
+              <td class="amount">{{ s.amount|money }} {{ s.currency }}</td>
+              <td>{% status_badge s.match_status %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3"><div class="empty"><i class="bi bi-cash-stack"></i>Not in any settlement yet</div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

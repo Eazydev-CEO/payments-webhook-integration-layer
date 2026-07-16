@@ -1,0 +1,9 @@
+# Payments & Webhook Integration Layer — production dependencies
+Django>=5.0,<5.2
+djangorestframework>=3.15
+drf-spectacular>=0.27
+django-filter>=24.0
+python-dotenv>=1.0
+whitenoise>=6.6
+gunicorn>=22.0
+requests>=2.31

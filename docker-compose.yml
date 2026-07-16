@@ -1,0 +1,21 @@
+services:
+  web:
+    build: .
+    image: payments-webhook-layer:latest
+    container_name: payments_webhook_layer
+    # Host port is chosen at runtime (random free port) and stored in .env.
+    # Container always listens on 8000.
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DB_DIR: /data
+    volumes:
+      # Persist the SQLite database across container rebuilds.
+      - app_db:/data
+    restart: unless-stopped
+
+volumes:
+  app_db:

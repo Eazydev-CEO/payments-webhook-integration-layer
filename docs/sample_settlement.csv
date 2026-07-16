@@ -1,0 +1,6 @@
+reference,amount,currency,status,paid_at
+REPLACE_WITH_A_REAL_PI_REFERENCE,149.99,USD,success,2026-07-08
+another_pi_reference,49.00,USD,success,2026-07-08
+mismatch_example_pi,150.00,USD,success,2026-07-08
+currency_example_pi,99.50,EUR,success,2026-07-08
+unknown_settlement_row,77.00,USD,success,2026-07-08

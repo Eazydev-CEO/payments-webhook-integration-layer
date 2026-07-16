@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load pb %}
+{% block title %}CRM Deliveries{% endblock %}
+{% block topbar_title %}CRM Deliveries{% endblock %}
+{% block topbar_sub %}Normalized events fanned out to CRMs{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h1>CRM Deliveries</h1><p>{{ page_obj.paginator.count }} delivery attempts to HubSpot / Zoho / Internal</p></div>
+</div>
+
+<form method="get" class="filters">
+  <select name="target" data-autosubmit>
+    <option value="">All targets</option>
+    <option value="hubspot" {% if filters.target == 'hubspot' %}selected{% endif %}>HubSpot</option>
+    <option value="zoho" {% if filters.target == 'zoho' %}selected{% endif %}>Zoho</option>
+    <option value="internal" {% if filters.target == 'internal' %}selected{% endif %}>Internal</option>
+  </select>
+  <select name="status" data-autosubmit>
+    <option value="">All statuses</option>
+    {% for value, label in status_choices %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+</form>
+
+<div class="card">
+  <div class="card-body tight">
+    <div class="table-wrap">
+      <table class="pb-table">
+        <thead><tr><th>#</th><th>Target</th><th>Event type</th><th>Source event</th>
+          <th>Status</th><th>Retries</th><th>Next retry</th><th></th></tr></thead>
+        <tbody>
+          {% for d in page_obj %}
+          <tr>
+            <td class="text-faint">{{ d.pk }}</td>
+            <td>{{ d.get_target_display }}</td>
+            <td class="text-muted-2">{{ d.event_type|default:"—" }}</td>
+            <td class="mono text-faint">{{ d.source_event_id|truncatechars:18 }}</td>
+            <td>{% status_badge d.status %}</td>
+            <td>{{ d.retry_count }}/{{ d.max_retries }}</td>
+            <td class="text-faint nowrap">{{ d.next_retry_at|date:"M d, H:i"|default:"—" }}</td>
+            <td>
+              {% if d.status == 'failed' or d.status == 'permanently_failed' %}
+              <form method="post" action="{% url 'dashboard:crm_retry' d.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-arrow-clockwise"></i> Retry</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8"><div class="empty"><i class="bi bi-diagram-3"></i>No CRM deliveries yet</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

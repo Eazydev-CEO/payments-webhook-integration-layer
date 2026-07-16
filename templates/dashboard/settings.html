@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load pb %}
+{% block title %}Settings{% endblock %}
+{% block topbar_title %}Settings / Processors{% endblock %}
+{% block topbar_sub %}Integration configuration{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h1>Settings / Processors</h1><p>Configured payment processors &amp; runtime mode</p></div>
+</div>
+
+{% if DEMO_MODE %}
+<div class="alert alert-warning">
+  <i class="bi bi-flask"></i>
+  <div><strong>Demo mode is active.</strong> No live Stripe/Paystack secrets are configured, so signatures
+    are accepted in demo mode and payments are simulated. Set <code class="mono">STRIPE_SECRET_KEY</code> /
+    <code class="mono">PAYSTACK_SECRET_KEY</code> (and their webhook secrets) in <code class="mono">.env</code> to go live.</div>
+</div>
+{% endif %}
+
+<div class="kpi-grid">
+  {% for p in processors %}
+  <div class="card">
+    <div class="card-body">
+      <div class="flex items-center gap-8" style="justify-content:space-between;">
+        <div class="flex items-center gap-8">
+          <span class="kpi-icon" style="width:40px;height:40px;border-radius:11px;">
+            {% if p.code == 'stripe' %}<i class="bi bi-stripe"></i>
+            {% elif p.code == 'paystack' %}<i class="bi bi-credit-card-2-front"></i>
+            {% else %}<i class="bi bi-hdd-network"></i>{% endif %}
+          </span>
+          <div>
+            <div style="font-weight:650;">{{ p.name }}</div>
+            <div class="text-faint mono" style="font-size:11.5px;">{{ p.code }}</div>
+          </div>
+        </div>
+        {% if p.mode_label == 'Live' %}<span class="badge-pill b-green">Live</span>
+        {% else %}<span class="badge-pill b-amber">Demo</span>{% endif %}
+      </div>
+      <dl class="dl" style="margin-top:14px;">
+        <dt>Active</dt><dd>{% if p.is_active %}<span class="badge-pill b-green">Yes</span>{% else %}<span class="badge-pill b-gray">No</span>{% endif %}</dd>
+        <dt>Webhooks</dt><dd>{% if p.supports_webhooks %}Supported{% else %}—{% endif %}</dd>
+        <dt>Intents</dt><dd>{{ p.intents.count }}</dd>
+        <dt>Webhook events</dt><dd>{{ p.webhook_events.count }}</dd>
+      </dl>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card mt-20">
+  <div class="card-head"><h2>Webhook endpoints</h2></div>
+  <div class="card-body">
+    <p class="text-faint" style="margin-top:0;font-size:12.5px;">Point each processor's webhook configuration at:</p>
+    <dl class="dl">
+      <dt>Stripe</dt><dd class="mono">POST /api/webhooks/stripe/</dd>
+      <dt>Paystack</dt><dd class="mono">POST /api/webhooks/paystack/</dd>
+      <dt>Internal / normalized</dt><dd class="mono">POST /api/webhooks/internal/</dd>
+      <dt>OpenAPI docs</dt><dd><a href="/api/docs/" target="_blank">/api/docs/</a></dd>
+    </dl>
+  </div>
+</div>
+{% endblock %}

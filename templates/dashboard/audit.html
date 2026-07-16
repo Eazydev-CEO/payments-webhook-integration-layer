@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load pb %}
+{% block title %}Audit Logs{% endblock %}
+{% block topbar_title %}Audit Logs{% endblock %}
+{% block topbar_sub %}Immutable trail of key actions{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div><h1>Audit Logs</h1><p>{{ page_obj.paginator.count }} recorded events</p></div>
+</div>
+
+<form method="get" class="filters">
+  <select name="action" data-autosubmit>
+    <option value="">All actions</option>
+    {% for value, label in action_choices %}<option value="{{ value }}" {% if filters.action == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+</form>
+
+<div class="card">
+  <div class="card-body tight">
+    <div class="table-wrap">
+      <table class="pb-table">
+        <thead><tr><th>When</th><th>Action</th><th>Summary</th><th>Actor</th><th>Entity</th><th>IP</th></tr></thead>
+        <tbody>
+          {% for log in page_obj %}
+          <tr>
+            <td class="text-faint nowrap">{{ log.created_at|date:"M d, H:i:s" }}</td>
+            <td><span class="badge-pill b-violet">{{ log.get_action_display }}</span></td>
+            <td class="text-muted-2">{{ log.summary }}</td>
+            <td>{{ log.actor.username|default:"system" }}</td>
+            <td class="mono text-faint">{{ log.entity_type }}{% if log.entity_id %} · {{ log.entity_id|truncatechars:16 }}{% endif %}</td>
+            <td class="text-faint mono">{{ log.ip_address|default:"—" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6"><div class="empty"><i class="bi bi-shield-check"></i>No audit entries yet</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

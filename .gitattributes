@@ -1,0 +1,24 @@
+# Normalize line endings so clones behave identically on every platform.
+* text=auto eol=lf
+
+# Files that MUST keep LF: they run inside the Linux container. A CRLF
+# checkout on Windows would break the shebang and the container would not boot.
+*.sh            text eol=lf
+docker-entrypoint.sh text eol=lf
+Dockerfile      text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+
+# Windows-native tooling keeps CRLF.
+*.ps1           text eol=crlf
+
+# Binary assets — never touch.
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.ico           binary
+*.sqlite3       binary
+
+# Keep diffs readable / collapse generated noise on GitHub.
+docs/screenshots/* linguist-documentation

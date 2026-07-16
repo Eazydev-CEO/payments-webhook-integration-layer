@@ -1,0 +1,32 @@
+{% load static %}
+<header class="pb-topbar">
+  <button class="icon-btn pb-menu-toggle" id="pb-menu-toggle" aria-label="Menu">
+    <i class="bi bi-list"></i>
+  </button>
+  <div class="page-title">
+    {% block topbar_title %}{{ SITE_NAME }}{% endblock %}
+    <small>{% block topbar_sub %}Operator control center{% endblock %}</small>
+  </div>
+  <div class="spacer"></div>
+
+  {% if DEMO_MODE %}
+  <span class="demo-banner" title="No live processor keys configured">
+    <i class="bi bi-flask"></i> Demo mode
+  </span>
+  {% endif %}
+
+  <button class="icon-btn" id="pb-theme-toggle" aria-label="Toggle theme" title="Toggle theme">
+    <i class="bi bi-sun"></i>
+  </button>
+
+  <div class="pb-user">
+    <span class="avatar">{{ user.username|slice:":1"|upper }}</span>
+    <span class="name">{{ user.username }}</span>
+    <form action="{% url 'accounts:logout' %}" method="post" style="display:inline;margin:0;">
+      {% csrf_token %}
+      <button class="icon-btn btn-ghost" type="submit" title="Log out" style="border:none;background:transparent;">
+        <i class="bi bi-box-arrow-right"></i>
+      </button>
+    </form>
+  </div>
+</header>
