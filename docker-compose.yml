@@ -2,7 +2,10 @@ services:
   web:
     build: .
     image: payments-webhook-layer:latest
-    container_name: payments_webhook_layer
+    # No container_name on purpose: a fixed name is global to the Docker daemon
+    # and would collide with any other checkout of this project. Compose derives
+    # a unique name from the project instead (override with `docker compose -p`).
+    #
     # Host port is chosen at runtime (random free port) and stored in .env.
     # Container always listens on 8000.
     ports:
