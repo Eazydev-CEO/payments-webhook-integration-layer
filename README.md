@@ -1,5 +1,11 @@
 # PayBridge — Payments & Webhook Integration Layer
 
+![Python](https://img.shields.io/badge/Python-3-3776AB?logo=python&logoColor=white)
+![Django](https://img.shields.io/badge/Django-5.1-0C4B33?logo=django&logoColor=white)
+![Stripe](https://img.shields.io/badge/Stripe-webhooks-635BFF?logo=stripe&logoColor=white)
+![Paystack](https://img.shields.io/badge/Paystack-webhooks-00C3F7)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
 One internal API in front of Stripe, Paystack and an internal/manual processor: idempotent payment
 intents, signed webhook ingestion, duplicate suppression, retry/backoff, CRM fan-out, and settlement
 reconciliation.
